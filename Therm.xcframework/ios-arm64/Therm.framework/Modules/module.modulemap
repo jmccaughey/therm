@@ -1,0 +1,8 @@
+framework module "Therm" {
+	header "ref.h"
+    header "Therm.objc.h"
+    header "Universe.objc.h"
+    header "Therm.h"
+
+    export *
+}
