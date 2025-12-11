@@ -12,7 +12,8 @@ import (
 	"time"
 )
 
-var sensor = ""
+var s_host = ""
+var s_port = 0
 
 func Therm(name string) string {
 	message := fmt.Sprintf("Hi, %v. Welcome from therm!", name)
@@ -20,13 +21,14 @@ func Therm(name string) string {
 }
 
 func thermHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("got call for", r.URL.Path, "connecting to", sensor)
-	conn, err := net.DialTimeout("tcp4", sensor, 20*time.Second)
+	address := fmt.Sprint(s_host, ":", s_port)
+	fmt.Println("got call for", r.URL.Path, "connecting to", address)
+	conn, err := net.DialTimeout("tcp4", address, 20*time.Second)
 	if err != nil {
 		panic(err)
 	}
 	defer conn.Close()
-	fmt.Println("connected to", sensor)
+	fmt.Println("connected to", address)
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
@@ -93,8 +95,9 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func startWeb(sensorhost string) {
-	sensor = sensorhost
+func startWeb(sensorhost string, sensorport int) {
+	s_host = sensorhost
+	s_port = sensorport
 	targetURL, err := url.Parse("http://192.168.1.92:8000") // Replace with your target host and port
 	if err != nil {
 		log.Fatalf("Failed to parse target URL: %v", err)
@@ -103,12 +106,6 @@ func startWeb(sensorhost string) {
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 	http.HandleFunc("/static", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Proxying request from %s to %s%s", r.RemoteAddr, targetURL.Host, r.URL.Path)
-
-		// Modify the request before forwarding (optional)
-		// For example, to set custom headers or modify the path
-		// r.Header.Set("X-Custom-Header", "Proxy-Request")
-
-		// Serve the HTTP request using the reverse proxy
 		proxy.ServeHTTP(w, r)
 	})
 	http.HandleFunc("/", indexHandler)
@@ -120,9 +117,9 @@ func startWeb(sensorhost string) {
 	}
 }
 
-func StartWeb(sensorhost string) {
-	fmt.Println("got StartWeb call...")
-	go startWeb(sensorhost)
+func StartWeb(sensorhost string, sensorport int) {
+	fmt.Println("got StartWeb call sensor host:", sensorhost, "port:", sensorport)
+	go startWeb(sensorhost, sensorport)
 	fmt.Println("...web started")
 }
 
