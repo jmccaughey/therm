@@ -1,8 +1,8 @@
 golang library for serving thermal data
 
 basic web server to serve:
-0. single-page-app / html
-0. http --> socket proxy to infrared sensor
+1. single-page-app / html
+1. http --> socket proxy to infrared sensor
 
 Via the go mobile project (https://github.com/golang/mobile) this library can be consumed in xcode. To build
 the xcode consumable, run: 
@@ -22,3 +22,4 @@ go run main/main.go
 
 This starts the webserver and waits for a keyboard interrupt (CTRL-C).
 
+To confirm the stream of thermal data, 
