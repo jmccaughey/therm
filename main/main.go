@@ -11,11 +11,11 @@ import (
 )
 
 func main() {
-	host := *flag.String("host", "127.0.0.1", "network host with sensor tcp/ip socket server")
-	port := *flag.Int("port", 9090, "network port with sensor tcp/ip socket server")
+	host := flag.String("host", "127.0.0.1", "network host with sensor tcp/ip socket server")
+	port := flag.Int("port", 9090, "network port with sensor tcp/ip socket server")
 	flag.Parse()
-	fmt.Println("host:", host, "port:", port)
-	therm.StartWeb(host, port)
+	fmt.Println("host:", *host, "port:", *port)
+	therm.StartWeb(*host, *port)
 	sigs := make(chan os.Signal, 1)
 
 	// Register the channel to receive notifications for SIGINT (Ctrl+C) and SIGTERM.

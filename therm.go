@@ -2,13 +2,9 @@ package therm
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"time"
 )
 
@@ -55,15 +51,6 @@ func thermHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Socket closed:", err)
 			return
 		}
-		// matrix, err := parse2dArray(line)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// var scaled [][]float64 = ScaleBicubicNFNT(matrix, 10)
-		// data, err := json.Marshal(scaled)
-		// if err != nil {
-		// 	panic(err)
-		// }
 		_, err = fmt.Fprintf(w, "%s", line)
 		if err != nil {
 			fmt.Println("write error:", err)
@@ -71,15 +58,6 @@ func thermHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		flusher.Flush()
 	}
-}
-
-func parse2dArray(jsonStr string) ([][]float64, error) {
-	var matrix [][]float64
-	err := json.Unmarshal([]byte(jsonStr), &matrix)
-	if err != nil {
-		return nil, err
-	}
-	return matrix, nil
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -90,28 +68,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, page)
 }
 
-func staticHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("got static call for:", r.URL.Path, r.RemoteAddr, r.UserAgent())
-
-}
-
 func startWeb(sensorhost string, sensorport int) {
 	s_host = sensorhost
 	s_port = sensorport
-	targetURL, err := url.Parse("http://192.168.1.92:8000") // Replace with your target host and port
-	if err != nil {
-		log.Fatalf("Failed to parse target URL: %v", err)
-	}
-	// Create a new reverse proxy
-	proxy := httputil.NewSingleHostReverseProxy(targetURL)
-	http.HandleFunc("/static", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Proxying request from %s to %s%s", r.RemoteAddr, targetURL.Host, r.URL.Path)
-		proxy.ServeHTTP(w, r)
-	})
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/ir", thermHandler)
 	fmt.Println("about to ListenAndServe on http://0.0.0.0:8080")
-	err = http.ListenAndServe("0.0.0.0:8080", nil)
+	err := http.ListenAndServe("0.0.0.0:8080", nil)
 	if err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}
