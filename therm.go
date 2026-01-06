@@ -100,6 +100,9 @@ var page = `
     margin: 0;
   }
 
+  .videocanvas {
+            border: 1px solid black;
+        }
   /* Use the viewport size — avoids issues with body margins/padding */
   canvas {
     position: absolute;
@@ -112,20 +115,26 @@ var page = `
       height: 300;
       object-fit: cover; /* crop to fill */
     }
+  .hidden {
+            display: none;
+  }
 </style>
 </head>
 <body>
 <canvas id="heatmap" width="100%" height="100%"></canvas>
+<canvas id="videoCanvas" class="videocanvas" width="640" height="480"></canvas>
 <!--<img class="fullscreen" src="hike.jpg" alt="">-->
-<video id="video1" class="fullscreen" autoplay muted playsinline webkit-playsinline controls></video>
+<video id="video1" class="hidden" autoplay muted playsinline webkit-playsinline controls></video>
 <!-- Include chroma.js for color scaling -->
 <script src="https://cdn.jsdelivr.net/npm/chroma-js@2.4.2/chroma.min.js"></script>
 <script>
     // https://jsfiddle.net/jib1/yxbLvjm6/
   const pc1 = new RTCPeerConnection();
-
+  const video = document.getElementById('video1');
+  const videocanvas = document.getElementById('videoCanvas');
   const canvas = document.getElementById('heatmap');
   const ctx = canvas.getContext('2d');
+  const videoctx = videoCanvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
 
@@ -140,12 +149,28 @@ var page = `
     '#FFFFFF88'  // White (max)
   ]).domain([14, 26]); // IR intensity
 
-  
   var alreadyUsingRearCamera = false;
   let chunks = [];
   var mediaRecorder;
   var recordingStart = null;
   var downloadPending = false;
+
+  video.addEventListener('canplaythrough', () => {
+      video.play();
+  });
+
+  video.addEventListener('play', () => {
+    function drawVideoFrame() {
+        // Draw the current frame of the video onto the canvas
+        videoctx.drawImage(video, 0, 0, videoCanvas.width, videoCanvas.height);
+
+        // Request the next frame to continue the animation loop
+        requestAnimationFrame(drawVideoFrame);
+    }
+
+    // Start the initial animation frame
+    requestAnimationFrame(drawVideoFrame);
+  });
 
   function drawHeatmap(data) {
       const rows = data.length
@@ -256,7 +281,7 @@ async function startStream() {
 
 function startVideoRecording() {
   // https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/captureStream#browser_compatibility
-  mediaRecorder = new MediaRecorder(video1.captureStream());
+  mediaRecorder = new MediaRecorder(videoCanvas.captureStream());
   mediaRecorder.ondataavailable = event => {
             console.log("got MediaRecorder data available");
             chunks.push(event.data);
