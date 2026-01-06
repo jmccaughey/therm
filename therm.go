@@ -142,6 +142,10 @@ var page = `
 
   
   var alreadyUsingRearCamera = false;
+  let chunks = [];
+  var mediaRecorder;
+  var recordingStart = null;
+  var downloadPending = false;
 
   function drawHeatmap(data) {
       const rows = data.length
@@ -248,6 +252,35 @@ async function startStream() {
     for await (let line of makeTextFileLineIterator(document.URL + "ir")) {
         drawHeatmap(JSON.parse(line));
     }
+}
+
+function startVideoRecording() {
+  // https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/captureStream#browser_compatibility
+  mediaRecorder = new MediaRecorder(video1.captureStream());
+  mediaRecorder.ondataavailable = event => {
+            console.log("got MediaRecorder data available");
+            chunks.push(event.data);
+            if (downloadPending) {
+              doDownload();
+            }
+        };
+  recordingStart = new Date();
+  mediaRecorder.start();
+}
+
+function doDownload() {
+  const blob = new Blob(chunks, { type: 'video/webm' });
+  const videoURL = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = videoURL;
+  a.download = recordingStart.toISOString() + '_recording.webm';
+  a.click();
+}
+
+function downloadVideoRecording() {
+  console.log("stopping MediaRecorder");
+  downloadPending = true;
+  mediaRecorder.stop();
 }
 
 window.addEventListener('orientationchange', () => setTimeout(switchToRearCamera, 100));
