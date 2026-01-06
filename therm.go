@@ -151,8 +151,10 @@ var page = `
 
   var alreadyUsingRearCamera = false;
   let chunks = [];
+  let thermChunks = [];
   var mediaRecorder;
   var recordingStart = null;
+  var thermStart = null;
   var downloadPending = false;
 
   video.addEventListener('canplaythrough', () => {
@@ -250,6 +252,7 @@ async function* makeTextFileLineIterator(fileURL) {
   console.log("got chunk: " + chunk);
   let re = /\r?\n/g;
   let startIndex = 0;
+  thermStart = new Date();
 
   for (;;) {
     let result = re.exec(chunk);
@@ -264,12 +267,16 @@ async function* makeTextFileLineIterator(fileURL) {
       startIndex = re.lastIndex = 0;
       continue;
     }
-    yield chunk.substring(startIndex, result.index);
+    var out = chunk.substring(startIndex, result.index) + "\n";
+    thermChunks.push(out);
+    yield out;
     startIndex = re.lastIndex;
   }
   if (startIndex < chunk.length) {
     // last line didn't end in a newline char
-    yield chunk.substring(startIndex);
+    var out = chunk.substring(startIndex) + "\n";
+    thermChunks.push(out);
+    yield out;
   }
 }
 
@@ -306,6 +313,15 @@ function downloadVideoRecording() {
   console.log("stopping MediaRecorder");
   downloadPending = true;
   mediaRecorder.stop();
+}
+
+function downloadTherm() {
+  const blob = new Blob(thermChunks, { type: 'text/plain' });
+  const textURL = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = textURL;
+  a.download = thermStart.toISOString() + '_therm_recording.txt';
+  a.click();
 }
 
 window.addEventListener('orientationchange', () => setTimeout(switchToRearCamera, 100));
