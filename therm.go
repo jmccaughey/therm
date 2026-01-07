@@ -102,6 +102,7 @@ var page = `
 
   .videocanvas {
             border: 1px solid black;
+            opacity: 50%;
         }
   /* Use the viewport size — avoids issues with body margins/padding */
   canvas {
@@ -154,7 +155,6 @@ var page = `
   let thermChunks = [];
   var mediaRecorder;
   var recordingStart = null;
-  var thermStart = null;
   var downloadPending = false;
 
   video.addEventListener('canplaythrough', () => {
@@ -252,7 +252,6 @@ async function* makeTextFileLineIterator(fileURL) {
   console.log("got chunk: " + chunk);
   let re = /\r?\n/g;
   let startIndex = 0;
-  thermStart = new Date();
 
   for (;;) {
     let result = re.exec(chunk);
@@ -281,6 +280,7 @@ async function* makeTextFileLineIterator(fileURL) {
 }
 
 async function startStream() {
+    startVideoRecording();
     for await (let line of makeTextFileLineIterator(document.URL + "ir")) {
         drawHeatmap(JSON.parse(line));
     }
@@ -320,7 +320,7 @@ function downloadTherm() {
   const textURL = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = textURL;
-  a.download = thermStart.toISOString() + '_therm_recording.txt';
+  a.download = recordingStart.toISOString() + '_therm_recording.txt';
   a.click();
 }
 
