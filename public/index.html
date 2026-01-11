@@ -39,6 +39,7 @@
 <video id="video1" class="hidden" autoplay muted playsinline webkit-playsinline controls></video>
 <!-- Include chroma.js for color scaling -->
 <script src="https://cdn.jsdelivr.net/npm/chroma-js@2.4.2/chroma.min.js"></script>
+<script type="text/javascript" src="zip.min.js"></script>
 <script>
     // https://jsfiddle.net/jib1/yxbLvjm6/
   const pc1 = new RTCPeerConnection();
@@ -236,13 +237,23 @@ function downloadVideoRecording() {
   mediaRecorder.stop();
 }
 
-function downloadTherm() {
-  const blob = new Blob(thermChunks, { type: 'text/plain' });
-  const textURL = URL.createObjectURL(blob);
+async function downloadTherm() {
+    let filenamebase = recordingStart.toISOString() + '_therm_recording';
+    const blob = new Blob(thermChunks, { type: 'text/plain' });
+  const zipFileWriter = new zip.BlobWriter("application/zip");
+  const zipWriter = new zip.ZipWriter(zipFileWriter);
+    await zipWriter.add(filenamebase + ".txt", new zip.BlobReader(blob));
+
+    // Close the writer to finalize the zip generation
+    const zipFileBlob = await zipWriter.close();
+  
+  // const textURL = URL.createObjectURL(blob);
+  const zipUrl = URL.createObjectURL(zipFileBlob);
   const a = document.createElement('a');
-  a.href = textURL;
-  a.download = recordingStart.toISOString() + '_therm_recording.txt';
+  a.href = zipUrl;
+  a.download = filenamebase + '.zip';
   a.click();
+  URL.revokeObjectURL(zipUrl)
 }
 
 window.addEventListener('orientationchange', () => setTimeout(switchToRearCamera, 100));
