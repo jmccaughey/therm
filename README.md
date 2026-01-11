@@ -23,3 +23,7 @@ go run main/main.go
 This starts the webserver and waits for a keyboard interrupt (CTRL-C).
 
 To confirm the stream of thermal data, 
+
+
+To find hosts on your local wifi network:
+`sudo nmap -sn -PR 192.168.1.0/24`
