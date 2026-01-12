@@ -33,6 +33,7 @@
 </style>
 </head>
 <body>
+    <a style="display: none;" href="recordings/2026-01-11T23_44_43.203Z_therm_recording.zip">recording</a>
 <canvas id="heatmap" width="100%" height="100%"></canvas>
 <canvas id="videoCanvas" class="videocanvas" width="640" height="480"></canvas>
 <!--<img class="fullscreen" src="hike.jpg" alt="">-->
@@ -68,6 +69,7 @@
   var mediaRecorder;
   var recordingStart = null;
   var downloadPending = false;
+  var thermalEvents = null;
 
   document.addEventListener("keydown", (event) => {
     if (event.code === "Space") {
@@ -147,8 +149,126 @@
             startStream();
         }
     }
+
+    function getPlaybackName() {
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        if (urlParams.has('recording')) {
+            return urlParams.get('recording');
+        } 
+        return "";
+    }
+
     
     (async () => {
+        const playbackName = getPlaybackName();
+        if (playbackName.length > 0) {
+            startPlayback(playbackName);
+        } else {
+            startLive();
+        }
+    //   try {
+    //     console.log("requesting camera perms...")
+    //     userMediaParams = {video: true, audio: false};
+    //     const stream = await navigator.mediaDevices.getUserMedia(userMediaParams);
+    //     for (const track of stream.getTracks()) {
+    //       await pc1.addTrack(track, stream);
+    //     }
+    //     video1.srcObject = stream;
+    //     startStream();
+    //   } catch (e) {
+    //     console.log(e);
+    //   }
+    })();
+
+function buildThermFileName(playbackName) { 
+    return "recordings/" + playbackName + "_therm_recording.zip";
+}
+
+function buildVideoFileName(playbackName) { 
+    return "recordings/" + playbackName + "_recording.webm";
+}
+
+async function startPlayback(playbackName) {
+    // build name of video file
+    // set src on video player to video 
+    // build name of thermal data zip
+    // fetch the thermal zip; unzip
+    // start loop that fires thermal event and sets timer for next one
+    
+    const videoFile = buildVideoFileName(playbackName);
+    console.log("video file is " + videoFile);
+    const thermFile = buildThermFileName(playbackName);
+    console.log("therm file is " + thermFile);
+    const thermBlob = await getThermalBlob(thermFile);
+    console.log("got thermBlob: " + thermBlob.length);
+    const dataBlob = await getThermReadings(thermBlob);
+    const text = await dataBlob.text()
+    console.log("got new therm data decompressed: " + text);
+    thermalEvents = collectEvents(text);
+    console.log("got events " + events.length);
+    fireThermalEvent();
+}
+
+function fireThermalEvent() {
+    event = thermalEvents[0];
+    console.log("firing " + event.ts)
+    tsLast = event.ts;
+    // call event handler
+    events.shift();
+    if (thermalEvents.length > 0) {
+        sleepAmount = thermalEvents[0].ts - event.ts;
+        console.log("sleeping for " + sleepAmount + " millis");
+        setTimeout(fireThermalEvent, sleepAmount);
+    } else {
+        console.log("thermal event stream ended");
+    }
+}
+
+function collectEvents(text){
+    events = new Array();
+    lines = text.split('\n');
+    console.log("got lines " + lines.length);
+    for (const line of lines) {
+        if (line.length > 0) {
+            event = JSON.parse(line);
+            console.log("got event for " + event.ts)
+            events.push(event);
+        }
+    }
+    return events;
+}
+
+async function getThermReadings(thermBlob) {
+    const zipFileReader = new zip.BlobReader(thermBlob);
+    const zipReader = new zip.ZipReader(zipFileReader);
+    const entries = await zipReader.getEntries();
+
+  if (entries.length != 1) {
+    throw new Error("Expected one entry in zip file, found " + entries.length);
+  }
+  const firstEntry = entries[0];
+
+  if (firstEntry.directory) {
+      throw new Error("The entry is a directory, not a file.");
+  }
+  const dataBlob = await firstEntry.getData(new zip.BlobWriter());
+  await zipReader.close();
+  return dataBlob;
+}
+
+async function getThermalBlob(thermFile) {
+    const response = await fetch(thermFile);    
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    } else {
+        console.log("fetched " + thermFile);
+    }
+    const zipBlob = await response.blob(); 
+    return await zipBlob;
+}
+
+async function startLive() {
       try {
         console.log("requesting camera perms...")
         userMediaParams = {video: true, audio: false};
@@ -161,7 +281,7 @@
       } catch (e) {
         console.log(e);
       }
-    })();
+}
 
 async function* makeTextFileLineIterator(fileURL) {
   const utf8Decoder = new TextDecoder("utf-8");
