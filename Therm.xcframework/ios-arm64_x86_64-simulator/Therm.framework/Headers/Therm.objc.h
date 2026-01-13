@@ -11,10 +11,7 @@
 #include "Universe.objc.h"
 
 
-// skipped function ScaleBicubicNFNT with unsupported parameter or return types
-
-
-FOUNDATION_EXPORT void ThermStartWeb(NSString* _Nullable sensorhost);
+FOUNDATION_EXPORT void ThermStartWeb(NSString* _Nullable sensorhost, long sensorport);
 
 FOUNDATION_EXPORT NSString* _Nonnull ThermTherm(NSString* _Nullable name);
 

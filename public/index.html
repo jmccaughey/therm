@@ -70,6 +70,9 @@
   var recordingStart = null;
   var downloadPending = false;
   var thermalEvents = null;
+  var lastSleepMillis = 0;
+  var lastTimestamp = 0;
+  var offsetMillis = 0;
 
   document.addEventListener("keydown", (event) => {
     if (event.code === "Space") {
@@ -190,12 +193,6 @@ function buildVideoFileName(playbackName) {
 }
 
 async function startPlayback(playbackName) {
-    // build name of video file
-    // set src on video player to video 
-    // build name of thermal data zip
-    // fetch the thermal zip; unzip
-    // start loop that fires thermal event and sets timer for next one
-    
     const videoFile = buildVideoFileName(playbackName);
     console.log("video file is " + videoFile);
     const thermFile = buildThermFileName(playbackName);
@@ -212,14 +209,22 @@ async function startPlayback(playbackName) {
 
 function fireThermalEvent() {
     event = thermalEvents[0];
-    console.log("firing " + event.ts)
+    if (offsetMillis == 0) {
+        offsetMillis = Date.now() - event.ts;
+    }
     tsLast = event.ts;
-    // call event handler
+    drawHeatmap(event);
     events.shift();
     if (thermalEvents.length > 0) {
-        sleepAmount = thermalEvents[0].ts - event.ts;
-        console.log("sleeping for " + sleepAmount + " millis");
+        // time elapsed is usually longer than requested, so catch up
+        nowMillis = Date.now();
+        sleepAmount = (thermalEvents[0].ts + offsetMillis) - nowMillis;
+        sleptMillis = nowMillis - lastTimestamp;
+        // console.log("slept: " + sleptMillis + " scheduled " + lastSleepMillis);
+        // console.log("setting timeout to " + sleepAmount + " millis");
         setTimeout(fireThermalEvent, sleepAmount);
+        lastSleepMillis = sleepAmount;
+        lastTimestamp = nowMillis;
     } else {
         console.log("thermal event stream ended");
     }
@@ -232,7 +237,6 @@ function collectEvents(text){
     for (const line of lines) {
         if (line.length > 0) {
             event = JSON.parse(line);
-            console.log("got event for " + event.ts)
             events.push(event);
         }
     }
