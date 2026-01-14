@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-//go:embed public
-var public embed.FS
+//go:embed docs
+var docs embed.FS
 
 var s_host = ""
 var s_port = 0
@@ -69,12 +69,12 @@ func thermHandler(w http.ResponseWriter, r *http.Request) {
 func startWeb(sensorhost string, sensorport int) {
 	s_host = sensorhost
 	s_port = sensorport
-	publicFS, err := fs.Sub(public, "public")
+	docsFS, err := fs.Sub(docs, "docs")
 	if err != nil {
 		log.Fatal(err)
 	}
 	http.HandleFunc("/ir", thermHandler)
-	http.Handle("/", http.FileServer(http.FS(publicFS)))
+	http.Handle("/", http.FileServer(http.FS(docsFS)))
 	fmt.Println("about to ListenAndServe on http://0.0.0.0:8080")
 	err = http.ListenAndServe("0.0.0.0:8080", nil)
 	if err != nil {
