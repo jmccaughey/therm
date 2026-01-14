@@ -13,7 +13,7 @@
 
   .videocanvas {
             border: 1px solid black;
-            opacity: 50%;
+            opacity: 20%;
         }
   /* Use the viewport size — avoids issues with body margins/padding */
   canvas {
@@ -73,12 +73,14 @@
   var lastSleepMillis = 0;
   var lastTimestamp = 0;
   var offsetMillis = 0;
+  var videoBufferMillis = 400;
 
   document.addEventListener("keydown", (event) => {
     if (event.code === "Space") {
       event.preventDefault(); // prevents page scrolling
       console.log("Space bar pressed");
       downloadVideoRecording();
+      downloadTherm();
     }
   });   
 
@@ -170,18 +172,6 @@
         } else {
             startLive();
         }
-    //   try {
-    //     console.log("requesting camera perms...")
-    //     userMediaParams = {video: true, audio: false};
-    //     const stream = await navigator.mediaDevices.getUserMedia(userMediaParams);
-    //     for (const track of stream.getTracks()) {
-    //       await pc1.addTrack(track, stream);
-    //     }
-    //     video1.srcObject = stream;
-    //     startStream();
-    //   } catch (e) {
-    //     console.log(e);
-    //   }
     })();
 
 function buildThermFileName(playbackName) { 
@@ -205,12 +195,13 @@ async function startPlayback(playbackName) {
     thermalEvents = collectEvents(text);
     console.log("got events " + events.length);
     fireThermalEvent();
+    video1.src = videoFile;
 }
 
 function fireThermalEvent() {
     event = thermalEvents[0];
     if (offsetMillis == 0) {
-        offsetMillis = Date.now() - event.ts;
+        offsetMillis = (Date.now() - event.ts) + videoBufferMillis;
     }
     tsLast = event.ts;
     drawHeatmap(event);
@@ -295,7 +286,7 @@ async function* makeTextFileLineIterator(fileURL) {
   let reader = response.body.getReader();
   let { value: chunk, done: readerDone } = await reader.read();
   chunk = chunk ? utf8Decoder.decode(chunk, { stream: true }) : "";
-  console.log("got chunk: " + chunk);
+  // console.log("got chunk: " + chunk);
   let re = /\r?\n/g;
   let startIndex = 0;
 
