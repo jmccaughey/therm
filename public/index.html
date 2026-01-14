@@ -191,7 +191,7 @@ async function startPlayback(playbackName) {
     console.log("got thermBlob: " + thermBlob.length);
     const dataBlob = await getThermReadings(thermBlob);
     const text = await dataBlob.text()
-    console.log("got new therm data decompressed: " + text);
+    console.log("got new therm data decompressed: " + text.length + " bytes");
     thermalEvents = collectEvents(text);
     console.log("got events " + events.length);
     fireThermalEvent();
