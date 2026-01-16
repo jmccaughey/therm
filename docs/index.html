@@ -4,9 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IR Sensor Heatmap</title>
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000; /* Ensures background is black while video loads/plays */
+    overflow: hidden; /* Prevents scrollbars */
+}
+video {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover; /* This is the key property */
+    position: fixed; /* Fixes position relative to viewport */
+    top: 0;
+    left: 0;
+}
+</style>
 </head>
 <body>
-<h2>Thermal Infrared Sensor Experiment</h2>
 <video id="video1" width="80%" src="recordings/dualrecording.webm" autoplay muted playsinline webkit-playsinline loop></video>
 </body>
 </html>
