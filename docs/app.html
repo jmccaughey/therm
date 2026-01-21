@@ -74,14 +74,12 @@
   var lastTimestamp = 0;
   var offsetMillis = 0;
   var videoBufferMillis = 400;
-
-  document.addEventListener("keydown", (event) => {
-    if (event.code === "Space") {
-      event.preventDefault(); // prevents page scrolling
+  
+  document.addEventListener("click", (event) => {
+      event.preventDefault();
       console.log("Space bar pressed");
       downloadVideoRecording();
       downloadTherm();
-    }
   });   
 
   video.addEventListener('canplaythrough', () => {

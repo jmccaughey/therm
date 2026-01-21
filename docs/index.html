@@ -1,27 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IR Sensor Heatmap</title>
-<style>
-body {
-    margin: 0;
-    padding: 0;
-    background-color: #000; /* Ensures background is black while video loads/plays */
-    overflow: hidden; /* Prevents scrollbars */
-}
-video {
-    width: 100vw;
-    height: 100vh;
-    object-fit: cover; /* This is the key property */
-    position: fixed; /* Fixes position relative to viewport */
-    top: 0;
-    left: 0;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IR Sensor Heatmap</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: black;
+    }
+
+    .video-container {
+      position: fixed;
+      inset: 0;
+    }
+
+    video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+
+    video.active {
+      opacity: 1;
+    }
+  </style>
 </head>
 <body>
-<video id="video1" width="80%" src="recordings/dualrecording.webm" autoplay muted playsinline webkit-playsinline loop></video>
+
+<div class="video-container">
+  <video src="recordings/dualrecording.webm" autoplay muted playsinline webkit-playsinline loop></video>
+  <video src="recordings/2026-01-14T23_45_54.569Z_recording.webm" autoplay muted playsinline webkit-playsinline loop></video>
+</div>
+
+<script src="videoslides.js"></script>
 </body>
 </html>
