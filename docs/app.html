@@ -186,9 +186,10 @@ async function extractBlobs(recordingBlob) {
   console.log("extracting blobs: " + recordingBlob);
   const zipFileReader = new zip.BlobReader(recordingBlob);
   const zipReader = new zip.ZipReader(zipFileReader);
-  const thermEntry = (await zipReader.getEntries()).shift();
+  const entries = await zipReader.getEntries();
+  const thermEntry = await entries.shift();
   const thermBlob = await thermEntry.getData(new zip.BlobWriter());
-  const videoEntry = (await zipReader.getEntries()).shift();
+  const videoEntry = await entries.shift();
   const videoBlob = await videoEntry.getData(new zip.BlobWriter());
   return { vid: videoBlob, therm: thermBlob };
 }
@@ -204,15 +205,13 @@ async function startPlayback(playbackName) {
     const recordingBlob = await fetchBlob(recordingFile);
     console.log("got recordingBlob: " + recordingBlob.length);
     const blobHolder = await extractBlobs(recordingBlob);
-    // const dataBlob = await getThermReadings(blobHolder.therm);
     const text = await blobHolder.therm.text();
     console.log("got new therm data decompressed: " + text.length + " bytes");
     thermalEvents = collectEvents(text);
     console.log("got events " + events.length);
-    const videoBlobUrl = URL.createObjectURL(blobHolder.vid);
+    const videoBlobUrl = await URL.createObjectURL(blobHolder.vid);
     fireThermalEvent();
     video1.src = videoBlobUrl;
-    video1.load();
     video1.play();
 }
 
